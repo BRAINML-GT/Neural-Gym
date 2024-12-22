@@ -1,0 +1,37 @@
+[project]
+name = "neuralgym"
+version = "2024.0.1"
+description = "A gym library for computational neural science."
+authors = [{ name = "Feiyang Wu", email = "feiyangwu@gatech.edu" }]
+license = { file = "LICENSE" }
+dependencies = ["gymnasium", "mujoco"]
+requires-python = ">= 3.10"
+readme = "README.md"
+keywords = ["reinforcement-learning", "distributional rl", "pytorch", "mujoco"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/BRAINML-GT/Neural-Gym"
+Repository = "https://github.com/BRAINML-GT/Neural-Gym"
+
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "black", "flake8", "mypy"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["neuralgym"]
