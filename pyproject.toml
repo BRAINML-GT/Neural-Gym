@@ -1,33 +1,83 @@
 [project]
 name = "neuralgym"
-version = "2024.0.1"
+dynamic = ["version"]
 description = "A gym library for computational neural science."
 authors = [{ name = "Feiyang Wu", email = "feiyangwu@gatech.edu" }]
-license = { file = "LICENSE" }
-dependencies = ["gymnasium", "mujoco"]
+license = "MIT"
+dependencies = [
+    "gymnasium>=0.29.1",
+    "mujoco>=3.1.1",
+    "numpy>=1.24.0",
+    "torch>=2.0.0",
+    "scipy>=1.10.0",
+]
 requires-python = ">= 3.10"
 readme = "README.md"
-keywords = ["reinforcement-learning", "distributional rl", "pytorch", "mujoco"]
+keywords = [
+    "reinforcement-learning",
+    "distributional-rl",
+    "pytorch",
+    "mujoco",
+    "gymnasium",
+    "machine-learning",
+    "deep-learning",
+    "neural-networks",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "Topic :: Software Development :: Build Tools",
-    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 
 [project.urls]
 Homepage = "https://github.com/BRAINML-GT/Neural-Gym"
 Repository = "https://github.com/BRAINML-GT/Neural-Gym"
+Documentation = "https://github.com/BRAINML-GT/Neural-Gym/blob/main/README.md"
+"Bug Tracker" = "https://github.com/BRAINML-GT/Neural-Gym/issues"
 
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "black", "flake8", "mypy"]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "isort>=5.0.0",
+    "pre-commit>=3.0.0",
+]
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "sphinx-autodoc-typehints>=1.0.0",
+]
+examples = ["matplotlib>=3.7.0", "seaborn>=0.12.0", "jupyter>=1.0.0"]
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=64.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["neuralgym"]
+
+[tool.setuptools.dynamic]
+version = { attr = "neuralgym.__version__" }
+
+[tool.black]
+line-length = 88
+target-version = ["py310", "py311", "py312"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
