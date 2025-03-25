@@ -1,18 +1,14 @@
 [project]
 name = "neuralgym"
-dynamic = ["version"]
+version = "2025.03.19.dev1"
 description = "A gym library for computational neural science."
 authors = [{ name = "Feiyang Wu", email = "feiyangwu@gatech.edu" }]
 license = "MIT"
-dependencies = [
-    "gymnasium>=0.29.1",
-    "mujoco>=3.1.1",
-    "numpy>=1.24.0",
-    "torch>=2.0.0",
-    "scipy>=1.10.0",
-]
-requires-python = ">= 3.10"
+requires-python = ">=3.10"
 readme = "README.md"
+
+dependencies = ["gymnasium>=0.29.1", "mujoco", "numpy", "torch", "scipy"]
+
 keywords = [
     "reinforcement-learning",
     "distributional-rl",
@@ -23,6 +19,7 @@ keywords = [
     "deep-learning",
     "neural-networks",
 ]
+
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -38,46 +35,67 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-
 [project.urls]
 Homepage = "https://github.com/BRAINML-GT/Neural-Gym"
 Repository = "https://github.com/BRAINML-GT/Neural-Gym"
-Documentation = "https://github.com/BRAINML-GT/Neural-Gym/blob/main/README.md"
-"Bug Tracker" = "https://github.com/BRAINML-GT/Neural-Gym/issues"
 
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "flake8>=6.0.0",
-    "mypy>=1.0.0",
-    "isort>=5.0.0",
-    "pre-commit>=3.0.0",
+    "pytest",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy",
+    "isort",
+    "pre-commit",
+    "ruff",
+    "pytest-xdist",
 ]
-docs = [
-    "sphinx>=7.0.0",
-    "sphinx-rtd-theme>=1.0.0",
-    "sphinx-autodoc-typehints>=1.0.0",
-]
-examples = ["matplotlib>=3.7.0", "seaborn>=0.12.0", "jupyter>=1.0.0"]
+
+docs = ["sphinx", "sphinx-rtd-theme", "sphinx-autodoc-typehints", "myst-parser"]
+
+examples = ["matplotlib", "seaborn", "jupyter", "ipywidgets"]
 
 [build-system]
-requires = ["setuptools>=64.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.8.0"]
+build-backend = "scikit_build_core.build"
 
-[tool.setuptools]
-packages = ["neuralgym"]
+[tool.scikit-build]
+wheel.packages = ["neuralgym"]
+cmake.minimum-version = "3.15"
+cmake.source-dir = "."
+cmake.build-type = "Release"
+sdist.include = ["CMakeLists.txt"]
 
-[tool.setuptools.dynamic]
-version = { attr = "neuralgym.__version__" }
 
 [tool.black]
 line-length = 88
 target-version = ["py310", "py311", "py312"]
 include = '\.pyi?$'
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/docs/
+'''
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+line_length = 88
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+select = ["E", "F", "B", "I", "W", "C", "B", "S", "T", "Q"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --cov=neuralgym"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
