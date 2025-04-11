@@ -2,10 +2,11 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 from stable_baselines3.common.buffers import ReplayBuffer
+from stable_baselines3.common.save_util import load_from_pkl, save_to_pkl
 from stable_baselines3.common.type_aliases import ReplayBufferSamples
 from stable_baselines3.common.vec_env import VecNormalize
 
-from .dopamine_level import DopamineEnv
+from neuralgym.envs.dopamine_env import DopamineEnv
 
 
 def create_dopamine_replay_buffer(
@@ -67,7 +68,8 @@ def save_dopamine_replay_buffer(
         buffer_size: Optional maximum size of the buffer. If None, uses all available data.
     """
     buffer = create_dopamine_replay_buffer(env, buffer_size)
-    buffer.save(path)
+    # buffer.save(path)
+    save_to_pkl(path, buffer)
 
 
 def load_dopamine_replay_buffer(
@@ -89,7 +91,8 @@ def load_dopamine_replay_buffer(
         observation_space=env.observation_space,
         action_space=env.action_space,
     )
-    buffer.load(path)
+    # buffer.load(path)
+    buffer = load_from_pkl(path, buffer)
     return buffer
 
 
@@ -108,7 +111,17 @@ if __name__ == "__main__":
     batch = loaded_buffer.sample(batch_size=32)
     print("Batch shapes:")
     print(f"Observations: {batch.observations.shape}")
+    # print(f"Observations: {batch.observations}")
     print(f"Actions: {batch.actions.shape}")
+    # print(f"Actions: {batch.actions}")
     print(f"Rewards: {batch.rewards.shape}")
+    # print(f"Rewards: {batch.rewards}")
     print(f"Next observations: {batch.next_observations.shape}")
+    # print(f"Next observations: {batch.next_observations}")
     print(f"Dones: {batch.dones.shape}")
+    assert (batch.next_observations == batch.actions).all()
+
+    # Print out the replay buffer infos
+    print("Replay buffer infos:")
+    print(f"Buffer size: {loaded_buffer.size()}")
+    print(f"Buffer observations: {loaded_buffer.observation_space}")

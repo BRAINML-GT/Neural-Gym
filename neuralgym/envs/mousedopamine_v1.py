@@ -1,11 +1,12 @@
-import numpy as np
-import gymnasium as gym
-from gymnasium import spaces
 import os
 import pickle
 
+import gymnasium as gym
+import numpy as np
+from gymnasium import spaces
 
-class DopamineEnv(gym.Env):
+
+class MouseDopamineEnv(gym.Env):
     """
     An offline RL environment based on dopamine level data from mice.
 
@@ -15,12 +16,12 @@ class DopamineEnv(gym.Env):
 
     def __init__(self, data_path=None):
         """
-        Initialize the Dopamine environment.
+        Initialize the Mouse Dopamine environment.
 
         Args:
             data_path: Path to the data file (default: None, will use default path)
         """
-        super(DopamineEnv, self).__init__()
+        super(MouseDopamineEnv, self).__init__()
 
         # Default data path
         if data_path is None:
@@ -264,39 +265,3 @@ class DopamineEnv(gym.Env):
     def render(self):
         """Render the environment."""
         pass  # Not implemented for this environment
-
-
-# Example usage
-if __name__ == "__main__":
-    env = DopamineEnv()
-    print(f"Loaded environment with {env.n_syllables} syllables")
-    print(f"Data shape: {env.all_seqs.shape}, {env.all_DAs.shape}")
-
-    # Build and save replay buffer
-    env.save_replay_buffer("dopamine_replay_buffer.pkl")
-
-    # Get transition statistics
-    stats = env.get_transition_stats()
-    print(f"Computed statistics for {len(stats)} different transitions")
-
-    # Example of running a few episodes
-    for episode in range(3):
-        state, _ = env.reset()
-        total_reward = 0
-        step = 0
-
-        while True:
-            # In offline RL, we don't actually select actions
-            # but we can simulate by using the next state as the action
-            action = np.random.randint(0, env.n_syllables)
-            next_state, reward, terminated, truncated, _ = env.step(action)
-
-            total_reward += reward
-            step += 1
-
-            if terminated or truncated:
-                break
-
-        print(
-            f"Episode {episode+1} finished with {step} steps and reward {total_reward}"
-        )

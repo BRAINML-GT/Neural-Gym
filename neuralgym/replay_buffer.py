@@ -1,6 +1,6 @@
-from typing import Dict, List, Optional, Tuple, Union, Any
-import gymnasium as gym
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+import gymnasium as gym
 import numpy as np
 import torch
 from stable_baselines3.common.buffers import ReplayBuffer
@@ -160,60 +160,3 @@ class CustomReplayBuffer(ReplayBuffer):
         self.episode_lengths = data["episode_lengths"]
         self.pos = len(self.observations)
         self.full = self.pos >= self.buffer_size
-
-
-# Example usage
-if __name__ == "__main__":
-    import gymnasium as gym
-
-    # Create a simple environment
-    env = gym.make("CartPole-v1")
-
-    # Initialize the replay buffer
-    buffer = CustomReplayBuffer(
-        buffer_size=10000,
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-    )
-
-    # Collect some experience
-    obs, _ = env.reset()
-    for _ in range(100):
-        action = env.action_space.sample()
-        next_obs, reward, terminated, truncated, _ = env.step(action)
-        done = terminated or truncated
-
-        buffer.add(
-            obs=np.array([obs]),
-            next_obs=np.array([next_obs]),
-            action=np.array([action]),
-            reward=np.array([reward]),
-            done=np.array([done]),
-            infos=[{}],
-        )
-
-        obs = next_obs
-        if done:
-            obs, _ = env.reset()
-
-    # Get episode statistics
-    stats = buffer.get_episode_statistics()
-    print("Episode Statistics:", stats)
-
-    # Sample a batch
-    batch = buffer.sample(batch_size=32)
-    print("Batch shapes:")
-    print(f"Observations: {batch.observations.shape}")
-    print(f"Actions: {batch.actions.shape}")
-    print(f"Rewards: {batch.rewards.shape}")
-    print(f"Next observations: {batch.next_observations.shape}")
-    print(f"Dones: {batch.dones.shape}")
-
-    # Save and load the buffer
-    buffer.save("replay_buffer.npy")
-    new_buffer = CustomReplayBuffer(
-        buffer_size=10000,
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-    )
-    new_buffer.load("replay_buffer.npy")

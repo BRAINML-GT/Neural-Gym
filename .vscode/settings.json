@@ -1,4 +1,17 @@
 {
     "python.terminal.activateEnvironment": true,
-    "python.terminal.activateEnvInCurrentTerminal": true
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "editor.formatOnSave": true,
+    "python.analysis.typeCheckingMode": "standard",
+    "python.sortImports.path": "ruff",
+    "python.sortImports.args": [
+        "--select",
+        "I",
+        "--fix"
+    ],
+    "python.testing.pytestArgs": [
+        "test"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }

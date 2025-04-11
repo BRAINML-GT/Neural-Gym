@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from typing import Callable, SupportsFloat
 
-import numpy as np
-
 import gymnasium as gym
+import numpy as np
 from gymnasium.core import ActType, ObsType
 from gymnasium.error import InvalidBound
 
@@ -12,7 +11,6 @@ from gymnasium.error import InvalidBound
 class StdGaussianRewardWrapper(
     gym.RewardWrapper[ObsType, ActType], gym.utils.RecordConstructorArgs
 ):
-
     def __init__(
         self,
         env: gym.Env[ObsType, ActType],
@@ -33,13 +31,12 @@ class StdGaussianRewardWrapper(
             reward (Union[float, int, np.ndarray]): environment's reward
         """
         # add a gaussian noise to the reward
-        return reward + np.random.normal(0, 1)
+        return float(reward) + np.random.normal(0, 1)
 
 
 class RandomGaussianRewardWrapper(
     gym.Wrapper[ObsType, ActType, ObsType, ActType], gym.utils.RecordConstructorArgs
 ):
-
     def __init__(
         self,
         env: gym.Env[ObsType, ActType],
