@@ -6,11 +6,11 @@ from stable_baselines3.common.save_util import load_from_pkl, save_to_pkl
 from stable_baselines3.common.type_aliases import ReplayBufferSamples
 from stable_baselines3.common.vec_env import VecNormalize
 
-from neuralgym.envs.dopamine_env import DopamineEnv
+from neuralgym.envs import MouseDopamineEnv
 
 
 def create_dopamine_replay_buffer(
-    env: DopamineEnv,
+    env: MouseDopamineEnv,
     buffer_size: Optional[int] = None,
 ) -> ReplayBuffer:
     """
@@ -55,7 +55,7 @@ def create_dopamine_replay_buffer(
 
 
 def save_dopamine_replay_buffer(
-    env: DopamineEnv,
+    env: MouseDopamineEnv,
     path: str,
     buffer_size: Optional[int] = None,
 ) -> None:
@@ -63,7 +63,7 @@ def save_dopamine_replay_buffer(
     Create and save a Stable Baselines3 replay buffer from the dopamine level environment data.
 
     Args:
-        env: The DopamineEnv instance containing the data
+        env: The MouseDopamineEnv instance containing the data
         path: Path to save the replay buffer
         buffer_size: Optional maximum size of the buffer. If None, uses all available data.
     """
@@ -73,14 +73,14 @@ def save_dopamine_replay_buffer(
 
 
 def load_dopamine_replay_buffer(
-    env: DopamineEnv,
+    env: MouseDopamineEnv,
     path: str,
 ) -> ReplayBuffer:
     """
     Load a previously saved Stable Baselines3 replay buffer for the dopamine environment.
 
     Args:
-        env: The DopamineEnv instance
+        env: The MouseDopamineEnv instance
         path: Path to load the replay buffer from
 
     Returns:
@@ -99,7 +99,7 @@ def load_dopamine_replay_buffer(
 # Example usage
 if __name__ == "__main__":
     # Create the environment
-    env = DopamineEnv()
+    env = MouseDopamineEnv()
 
     # Create and save a replay buffer
     save_dopamine_replay_buffer(env, "dopamine_sb3_buffer.npz")

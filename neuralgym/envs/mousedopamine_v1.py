@@ -1,6 +1,6 @@
 import os
 import pickle
-
+from typing import Optional, Any
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
@@ -14,7 +14,11 @@ class MouseDopamineEnv(gym.Env):
     to create an environment for offline reinforcement learning.
     """
 
-    def __init__(self, data_path=None):
+    def __init__(
+        self,
+        data_path: Optional[str] = None,
+        max_syllables: Optional[int] = None,
+    ):
         """
         Initialize the Mouse Dopamine environment.
 
@@ -38,6 +42,13 @@ class MouseDopamineEnv(gym.Env):
 
         # Get the number of unique syllables
         self.n_syllables = np.max(self.all_seqs) + 1
+
+        # Set the maximum number of syllables, if provided
+        # if not provided, use all syllables
+        if max_syllables is not None:
+            self.max_syllables = max_syllables
+        else:
+            self.max_syllables = self.n_syllables
 
         # Define action and observation spaces
         self.action_space = spaces.Discrete(self.n_syllables)
@@ -81,7 +92,12 @@ class MouseDopamineEnv(gym.Env):
 
         return all_seqs, all_DAs, all_raw_DAs
 
-    def reset(self, seed=None, options=None):
+    def reset(
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ):
         """
         Reset the environment to start a new episode.
 
@@ -94,6 +110,10 @@ class MouseDopamineEnv(gym.Env):
         self.current_step = 0
         self.current_state = self.all_seqs[self.current_episode, self.current_step]
         self.episode_transitions = []
+
+        # Set the seed if provided
+        if seed is not None:
+            np.random.seed(seed)
 
         info = {}
         return self.current_state, info
