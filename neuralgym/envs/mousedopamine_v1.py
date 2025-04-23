@@ -4,26 +4,35 @@ from typing import Optional, Any
 import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
+from stable_baselines3.common.buffers import ReplayBuffer
+from stable_baselines3.common.save_util import load_from_pkl
 
 
 class MouseDopamineEnv(gym.Env):
     """
     An offline RL environment based on dopamine level data from mice.
 
-    This environment uses pre-recorded syllable sequences and dopamine levels
-    to create an environment for offline reinforcement learning.
+    This environment uses pre-processed replay buffer data containing
+    syllable sequences and dopamine levels for offline reinforcement learning.
     """
 
     def __init__(
         self,
         data_path: Optional[str] = None,
         max_syllables: Optional[int] = None,
+        mouse_id: Optional[str] = None,
+        trial_id: Optional[int] = None,
+        use_trial_id: Optional[bool] = False,
     ):
         """
         Initialize the Mouse Dopamine environment.
 
         Args:
-            data_path: Path to the data file (default: None, will use default path)
+            data_path: Path to the replay buffer file (default: None, will use default path)
+            max_syllables: Maximum number of syllables to consider (default: None, uses all)
+            mouse_id: Specific mouse ID to use (default: None, uses all mice)
+            trial_id: Specific trial ID to use (default: None, uses all trials)
+            use_trial_id: Whether to use trial ID (default: False)
         """
         super(MouseDopamineEnv, self).__init__()
 
@@ -31,28 +40,24 @@ class MouseDopamineEnv(gym.Env):
         if data_path is None:
             data_path = os.path.join(
                 os.path.dirname(os.path.dirname(__file__)),
-                "data/dopamine_level/data_by_mouse_id.npy",
+                "data/dopamine_level/mouse_rb.pkl",
             )
 
-        # Load data
-        self.seqs, self.DAs, self.z_DAs, self.timestamps = self._load_data(data_path)
+        # Load replay buffer
+        self.replay_buffer = load_from_pkl(data_path)
 
-        # Process data to get all sequences and DAs
-        self.all_seqs, self.all_DAs, self.all_raw_DAs = self._process_data()
-
-        # Get the number of unique syllables
-        self.n_syllables = np.max(self.all_seqs) + 1
+        # Get the number of unique syllables from the observation space
+        self.n_syllables = self.replay_buffer.observation_space.n
 
         # Set the maximum number of syllables, if provided
-        # if not provided, use all syllables
         if max_syllables is not None:
-            self.max_syllables = max_syllables
+            self.max_syllables = min(max_syllables, self.n_syllables)
         else:
             self.max_syllables = self.n_syllables
 
         # Define action and observation spaces
-        self.action_space = spaces.Discrete(self.n_syllables)
-        self.observation_space = spaces.Discrete(self.n_syllables)
+        self.action_space = spaces.Discrete(self.max_syllables)
+        self.observation_space = spaces.Discrete(self.max_syllables)
 
         # Environment properties
         self.current_step = 0
@@ -62,35 +67,6 @@ class MouseDopamineEnv(gym.Env):
 
         # Initialize state
         self.reset()
-
-    def _load_data(self, data_path):
-        """Load the data from the given path."""
-        try:
-            seqs, DAs, z_DAs, timestamps = np.load(data_path, allow_pickle=True)
-            return seqs, DAs, z_DAs, timestamps
-        except Exception as e:
-            raise ValueError(f"Failed to load data from {data_path}: {e}")
-
-    def _process_data(self):
-        """Process the data to get all sequences and DAs across mice."""
-        all_seqs = []
-        all_DAs = []
-        all_raw_DAs = []
-
-        mouse_ids = self.seqs.keys()
-        for mouse_id in mouse_ids:
-            curr_seqs = self.seqs[mouse_id]
-            curr_DAs = self.z_DAs[mouse_id]
-            curr_raw_DAs = self.DAs[mouse_id]
-            all_seqs.append(curr_seqs)
-            all_DAs.append(curr_DAs)
-            all_raw_DAs.append(curr_raw_DAs)
-
-        all_seqs = np.concatenate(all_seqs, axis=0)
-        all_DAs = np.concatenate(all_DAs, axis=0)
-        all_raw_DAs = np.concatenate(all_raw_DAs, axis=0)
-
-        return all_seqs, all_DAs, all_raw_DAs
 
     def reset(
         self,
@@ -105,10 +81,9 @@ class MouseDopamineEnv(gym.Env):
             observation: The initial observation
             info: Additional information
         """
-        # Select a random sequence from the dataset
-        self.current_episode = np.random.randint(0, len(self.all_seqs))
-        self.current_step = 0
-        self.current_state = self.all_seqs[self.current_episode, self.current_step]
+        # Select a random transition from the replay buffer
+        self.current_step = np.random.randint(0, len(self.replay_buffer.observations))
+        self.current_state, _, _, _, _ = self.replay_buffer.sample(1)
         self.episode_transitions = []
 
         # Set the seed if provided
@@ -116,7 +91,7 @@ class MouseDopamineEnv(gym.Env):
             np.random.seed(seed)
 
         info = {}
-        return self.current_state, info
+        return self.current_state.item(), info
 
     def step(self, action):
         """
@@ -132,13 +107,10 @@ class MouseDopamineEnv(gym.Env):
             truncated: Whether the episode is truncated
             info: Additional information
         """
-        if self.current_step >= len(self.all_seqs[self.current_episode]) - 2:
-            return self.current_state, 0, True, False, {}
-
-        # Get the actual next state and reward from the data
-        self.current_step += 1
-        next_state = self.all_seqs[self.current_episode, self.current_step]
-        reward = self.all_DAs[self.current_episode, self.current_step]
+        # Get the next state and reward from the replay buffer
+        next_state = self.replay_buffer.next_observations[self.current_step]
+        reward = self.replay_buffer.rewards[self.current_step]
+        done = self.replay_buffer.dones[self.current_step]
 
         # Record the transition
         transition = {
@@ -151,97 +123,16 @@ class MouseDopamineEnv(gym.Env):
         }
         self.episode_transitions.append(transition)
 
-        # Update current state
+        # Update current state and step
         self.current_state = next_state
+        self.current_step += 1
 
-        # Check if the episode is terminated
-        terminated = self.current_step >= len(self.all_seqs[self.current_episode]) - 1
-        truncated = False
+        # Check if we've reached the end of the buffer
+        if self.current_step >= len(self.replay_buffer.observations):
+            done = True
 
         info = {}
-        return next_state, reward, terminated, truncated, info
-
-    def build_replay_buffer(self, buffer_size=None):
-        """
-        Build a replay buffer from the dataset.
-
-        Args:
-            buffer_size: Maximum size of the buffer (default: None, uses all data)
-
-        Returns:
-            replay_buffer: A dictionary containing the replay buffer with only the first 10 syllables
-        """
-        # First count the maximum number of transitions we might collect
-        max_transitions = 0
-        for ep_idx in range(len(self.all_seqs)):
-            max_transitions += len(self.all_seqs[ep_idx]) - 1
-
-        # Determine provisional buffer size (might be adjusted later)
-        if buffer_size is None or buffer_size > max_transitions:
-            provisional_buffer_size = max_transitions
-        else:
-            provisional_buffer_size = buffer_size
-
-        # Initialize arrays to store transitions
-        states = np.zeros(provisional_buffer_size, dtype=np.int32)
-        actions = np.zeros(provisional_buffer_size, dtype=np.int32)
-        next_states = np.zeros(provisional_buffer_size, dtype=np.int32)
-        rewards = np.zeros(provisional_buffer_size, dtype=np.float32)
-        dones = np.zeros(provisional_buffer_size, dtype=np.bool_)
-
-        # Fill the arrays with valid transitions
-        idx = 0
-        for ep_idx in range(len(self.all_seqs)):
-            seq_len = len(self.all_seqs[ep_idx])
-            for step_idx in range(seq_len - 1):
-                if idx >= provisional_buffer_size:
-                    break
-
-                state = self.all_seqs[ep_idx, step_idx]
-                next_state = self.all_seqs[ep_idx, step_idx + 1]
-
-                # Only include transitions where both states are < 10 (first 10 syllables)
-                if state < 10 and next_state < 10:
-                    reward = self.all_DAs[ep_idx, step_idx]
-                    done = step_idx == seq_len - 2
-
-                    # Assuming the action taken was the actual next syllable
-                    action = next_state
-
-                    states[idx] = state
-                    actions[idx] = action
-                    next_states[idx] = next_state
-                    rewards[idx] = reward
-                    dones[idx] = done
-
-                    idx += 1
-
-        # Create the final replay buffer with the correct size
-        actual_buffer_size = idx
-        replay_buffer = {
-            "states": states[:actual_buffer_size],
-            "actions": actions[:actual_buffer_size],
-            "next_states": next_states[:actual_buffer_size],
-            "rewards": rewards[:actual_buffer_size],
-            "dones": dones[:actual_buffer_size],
-        }
-
-        return replay_buffer
-
-    def save_replay_buffer(self, path="replay_buffer.pkl", buffer_size=None):
-        """
-        Save the replay buffer to a file.
-
-        Args:
-            path: Path to save the replay buffer
-            buffer_size: Maximum size of the buffer
-        """
-        replay_buffer = self.build_replay_buffer(buffer_size)
-
-        with open(path, "wb") as f:
-            pickle.dump(replay_buffer, f)
-
-        print(f"Replay buffer saved to {path}")
+        return next_state, reward, done, False, info
 
     def get_transition_stats(self):
         """
@@ -254,20 +145,18 @@ class MouseDopamineEnv(gym.Env):
         transition_counts = {}
 
         # Count transitions and collect rewards
-        for ep_idx in range(len(self.all_seqs)):
-            seq_len = len(self.all_seqs[ep_idx])
-            for step_idx in range(seq_len - 1):
-                curr_state = self.all_seqs[ep_idx, step_idx]
-                next_state = self.all_seqs[ep_idx, step_idx + 1]
-                reward = self.all_DAs[ep_idx, step_idx]
+        for i in range(len(self.replay_buffer.observations)):
+            curr_state = self.replay_buffer.observations[i]
+            next_state = self.replay_buffer.next_observations[i]
+            reward = self.replay_buffer.rewards[i]
 
-                key = (curr_state, next_state)
-                if key not in transitions:
-                    transitions[key] = []
-                    transition_counts[key] = 0
+            key = (curr_state, next_state)
+            if key not in transitions:
+                transitions[key] = []
+                transition_counts[key] = 0
 
-                transitions[key].append(reward)
-                transition_counts[key] += 1
+            transitions[key].append(reward)
+            transition_counts[key] += 1
 
         # Calculate stats
         stats = {}

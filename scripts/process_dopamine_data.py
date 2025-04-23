@@ -127,7 +127,7 @@ def split_data_by_mouse_id_and_trial(max_syllables: Optional[int] = None):
             )
 
             # Add each valid transition pair to the replay buffer
-            for i in range(seqs[mouse_id][trial_id].shape[0] - 1):
+            for i in range(seqs[mouse_id][trial_id].shape[0] - 2):
                 # only save the transition if the current state and next state are all within the max_syllables
                 if (
                     seqs[mouse_id][trial_id][i] < max_syllables
@@ -137,7 +137,7 @@ def split_data_by_mouse_id_and_trial(max_syllables: Optional[int] = None):
                         obs=seqs[mouse_id][trial_id][i],
                         next_obs=seqs[mouse_id][trial_id][i + 1],
                         action=seqs[mouse_id][trial_id][i + 1],
-                        reward=DAs[mouse_id][trial_id][i + 1],
+                        reward=DAs[mouse_id][trial_id][i],
                         done=np.array([False]),
                         infos=[{}],
                     )
@@ -146,7 +146,7 @@ def split_data_by_mouse_id_and_trial(max_syllables: Optional[int] = None):
                         obs=seqs[mouse_id][trial_id][i],
                         next_obs=seqs[mouse_id][trial_id][i + 1],
                         action=seqs[mouse_id][trial_id][i + 1],
-                        reward=DAs[mouse_id][trial_id][i + 1],
+                        reward=DAs[mouse_id][trial_id][i],
                         done=np.array([False]),
                         infos=[{}],
                     )
