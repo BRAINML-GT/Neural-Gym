@@ -137,7 +137,7 @@ def split_data_by_mouse_id_and_trial(max_syllables: Optional[int] = None):
                         obs=seqs[mouse_id][trial_id][i],
                         next_obs=seqs[mouse_id][trial_id][i + 1],
                         action=seqs[mouse_id][trial_id][i + 1],
-                        reward=DAs[mouse_id][trial_id][i],
+                        reward=z_DAs[mouse_id][trial_id][i],
                         done=np.array([False]),
                         infos=[{}],
                     )
@@ -146,7 +146,7 @@ def split_data_by_mouse_id_and_trial(max_syllables: Optional[int] = None):
                         obs=seqs[mouse_id][trial_id][i],
                         next_obs=seqs[mouse_id][trial_id][i + 1],
                         action=seqs[mouse_id][trial_id][i + 1],
-                        reward=DAs[mouse_id][trial_id][i],
+                        reward=z_DAs[mouse_id][trial_id][i],
                         done=np.array([False]),
                         infos=[{}],
                     )
